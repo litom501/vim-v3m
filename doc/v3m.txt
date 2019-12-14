@@ -1,0 +1,82 @@
+*v3m.txt* A web browser interface plugin for Vim
+*v3m*
+
+    A web browser interface
+
+Author  : Koji Sato <litom501+vim@gmail.com>
+License : MIT License
+
+==============================================================================
+CONTENTS                                                        *v3m-contents*
+  1. Introduction                               |v3m-introduction|
+  2. Requirements                               |v3m-requirements|
+  3. Interface                                  |v3m-interface|
+    3.1 Commands                                |v3m-commands|
+    3.2 Mappings                                |v3m-mappings|
+    3.3 Variables                               |v3m-variables|
+    3.4 Functions                               |v3m-functions|
+  4. Changelog                                  |v3m-change-log|
+
+==============================================================================
+1. INTRODUCTION                                             *v3m-introduction*
+>
+ :e v3m://github.com/litom501/vim-v3m
+<
+or
+>
+ :V3m github.com/litom501/vim-v3m
+<
+TODO
+  * Form
+  * UserAgent
+  * Cookie
+  * neovim
+  * :write
+
+==============================================================================
+2. REQUIREMENTS                                             *v3m-requirements*
+
+command
+  v3m
+
+vim features
+  +job +channel
+
+==============================================================================
+3. INTERFACE                                                   *v3m-interface*
+
+------------------------------------------------------------------------------
+3.1 COMMANDS                                                    *v3m-commands*
+
+V3m                                                                      *V3m*
+>
+ :V3m github.com/litom501/vim-v3m
+ :V3m ~/.w3m/bookmark.html
+ :e v3m://github.com/litom501/vim-v3m
+ :e v3m://https://github.com/litom501/vim-v3m
+<
+
+------------------------------------------------------------------------------
+3.2 MAPPINGS                                                    *v3m-mappings*
+
+See Japanese help.
+
+------------------------------------------------------------------------------
+3.3 VARIABLES                                                  *v3m-variables*
+
+g:v3m#homepage
+
+e.g.
+  let g:v3m#homepage=github.com/litom501/vim-v3m
+
+------------------------------------------------------------------------------
+3.4 FUNCTIONS                                                  *v3m-functions*
+
+==============================================================================
+4. CHANGELOG                                                   *v3m-changelog*
+
+See Japanese help or git-log.
+
+==============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:
+

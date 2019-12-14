@@ -1,0 +1,4 @@
+let option = themis#option()
+let option.recursive = 1
+call add(option.runtimepath, '..')
+call themis#helper('command').with(themis#helper('assert'))

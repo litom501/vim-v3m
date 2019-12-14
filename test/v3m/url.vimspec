@@ -1,0 +1,368 @@
+scriptencoding utf-8
+
+Describe v3m plugin v3m/url.vim
+  It normalize_1()
+    Assert Equals(v3m#url#normalize('http://aaa.com', ''), 'http://aaa.com')
+  End
+
+  It normalize_2()
+    Assert Equals(v3m#url#normalize('https://aaa.com', ''), 'https://aaa.com')
+  End
+
+  It normalize_3()
+    Assert Equals(v3m#url#normalize('aaa.com', ''), 'https://aaa.com')
+  End
+
+  It normalize_4()
+    Assert Equals(v3m#url#normalize('/aaa.com', ''), '/aaa.com')
+  End
+
+  It normalize_5()
+    Assert Equals(v3m#url#normalize('/aaa.com', 'aaa.com'), 'https://aaa.com/aaa.com')
+  End
+
+  It normalize_6()
+    Assert Equals(v3m#url#normalize('/aaa.com', 'http://aaa.com'), 'http://aaa.com/aaa.com')
+  End
+
+  It normalize_7()
+    Assert Equals(v3m#url#normalize('/aaa.com', 'https://aaa.com'), 'https://aaa.com/aaa.com')
+  End
+
+  It normalize_8()
+    Assert Equals(v3m#url#normalize('file:///home/aaa', ''), 'file:///home/aaa')
+  End
+
+  It normalize_9()
+    Assert Equals(v3m#url#normalize('~/aaa.com', ''), '~/aaa.com')
+  End
+
+  It normalize_10()
+    Assert Equals(v3m#url#normalize('./aaa.com', ''), './aaa.com')
+  End
+
+  It normalize_11()
+    Assert Equals(v3m#url#normalize('../aaa.com', ''), '../aaa.com')
+  End
+
+  It domain_1()
+    Assert Equals(v3m#url#domain('http://aaa.com/bbb'), 'aaa.com')
+  End
+
+  It domain_2()
+    Assert Equals(v3m#url#domain('https://aaa.com/bbb'), 'aaa.com')
+  End
+
+  It domain_3()
+    Assert Equals(v3m#url#domain('/aaa.com/bbb'), '')
+  End
+
+  It domain_4()
+    Assert Equals(v3m#url#domain('http://aaa.com/'), 'aaa.com')
+  End
+
+  It domain_5()
+    Assert Equals(v3m#url#domain('https://aaa.com/'), 'aaa.com')
+  End
+
+  It domain_6()
+    Assert Equals(v3m#url#domain('/aaa.com/'), '')
+  End
+
+  It domain_7()
+    Assert Equals(v3m#url#domain('http://aaa.com'), 'aaa.com')
+  End
+
+  It domain_8()
+    Assert Equals(v3m#url#domain('https://aaa.com'), 'aaa.com')
+  End
+
+  It domain_9()
+    Assert Equals(v3m#url#domain('/aaa.com'), '')
+  End
+
+  It domain_10()
+     Assert Equals(v3m#url#domain('aaa.com'), '')
+  End
+
+  It domain_11()
+    try
+      call v3m#url#domain('https://')
+      call s:assert.fail("no exception")
+    catch /\[v3m\]\[ERROR\] .*/
+    endtry
+  End
+
+  It url_resolve_1()
+    Assert Equals(v3m#url#resolve('/', 'https://aaa.com'), 'https://aaa.com/')
+  End
+
+  It url_resolve_2()
+    Assert Equals(v3m#url#resolve('/', 'http://aaa.com/bbb'), 'http://aaa.com/')
+  End
+
+  It url_resolve_3()
+    Assert Equals(v3m#url#resolve('/', 'https://aaa.com/bbb/ccc'), 'https://aaa.com/')
+  End
+
+  It url_resolve_4()
+    Assert Equals(v3m#url#resolve('/bbb', 'http://aaa.com'), 'http://aaa.com/bbb')
+  End
+
+  It url_resolve_5()
+    Assert Equals(v3m#url#resolve('/bbb', 'https://aaa.com/ccc'), 'https://aaa.com/bbb')
+  End
+
+  It url_resolve_6()
+    Assert Equals(v3m#url#resolve('/bbb', 'http://aaa.com/ccc/ddd'), 'http://aaa.com/bbb')
+  End
+
+  It url_resolve_7()
+    Assert Equals(v3m#url#resolve('bbb', 'https://aaa.com'), 'https://aaa.com/bbb')
+  End
+
+  It url_resolve_8()
+    Assert Equals(v3m#url#resolve('bbb', 'http://aaa.com/ccc'), 'http://aaa.com/bbb')
+  End
+
+  It url_resolve_9()
+    Assert Equals(v3m#url#resolve('bbb', 'https://aaa.com/ccc/ddd'), 'https://aaa.com/ccc/bbb')
+  End
+
+  It url_resolve_10()
+    Assert Equals(v3m#url#resolve('aaa.com/bbb', 'https://ccc.com'), 'https://ccc.com/aaa.com/bbb')
+  End
+
+  It url_resolve_11()
+    Assert Equals(v3m#url#resolve('http://aaa.com/bbb', 'https://ccc.com'), 'http://aaa.com/bbb')
+  End
+
+  It url_resolve_12()
+    Assert Equals(v3m#url#resolve('https://aaa.com/bbb', 'https://ccc.com'), 'https://aaa.com/bbb')
+  End
+
+  It url_resolve_13()
+    Assert Equals(v3m#url#resolve('aaa', 'bbb'), 'aaa')
+  End
+
+  It url_resolve_14()
+    Assert Equals(v3m#url#resolve('aaa/bbb', 'ccc'), 'aaa/bbb')
+  End
+
+  It url_resolve_15()
+    Assert Equals(v3m#url#resolve('aaa/bbb', 'file:///ccc/ddd'), 'file:///ccc/aaa/bbb')
+  End
+
+  It url_resolve_16()
+    Assert Equals(v3m#url#resolve('aaa/bbb', 'file:///ccc/ddd/eee'), 'file:///ccc/ddd/aaa/bbb')
+  End
+
+  It url_resolve_17()
+    Assert Equals(v3m#url#resolve('#aaa', 'file:///bbb/ccc'), 'file:///bbb/ccc#aaa')
+  End
+
+  It url_resolve_18()
+    Assert Equals(v3m#url#resolve('aaa/bbb', '/ccc/ddd'), '/ccc/aaa/bbb')
+  End
+
+  It url_parse_1()
+    let url = 'http://aaa.com:80/abc?d=1&e=2#f'
+    let parsed = v3m#url#parse(url)
+    let expected = #{ scheme: 'http', domain: 'aaa.com', port: '80', path: '/abc', query: 'd=1&e=2', fragment:'f' }
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_2()
+    let url = 'http://aaa.com:80/abc?d=1'
+    let parsed = v3m#url#parse(url)
+    let expected = #{ scheme: 'http', domain: 'aaa.com', port: '80', path: '/abc', query: 'd=1', fragment:'' }
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_3()
+    let url = 'aaa.com/abc'
+    let parsed = v3m#url#parse(url)
+    let expected = #{ scheme: '', domain: '', port: '', path: 'aaa.com/abc', query: '', fragment:'' }
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_4()
+    let url = 'http://aaa.com/'
+    let parsed = v3m#url#parse(url)
+    let expected = #{ scheme: 'http', domain: 'aaa.com', port: '', path: '/', query: '', fragment:'' }
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_5()
+    let url = 'http://aaa.com'
+    let parsed = v3m#url#parse(url)
+    let expected = #{ scheme: 'http', domain: 'aaa.com', port: '', path: '', query: '', fragment:'' }
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_path_1()
+    let path = 'abc?d=1'
+    let parsed = v3m#url#_parse_path(path)
+    let expected = ['abc', 'd=1', '' ]
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_path_2()
+    let path = 'abc?'
+    let parsed = v3m#url#_parse_path(path)
+    let expected = ['abc', '', '' ]
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_path_3()
+    let path = 'abc#def'
+    let parsed = v3m#url#_parse_path(path)
+    let expected = ['abc', '', 'def' ]
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_path_4()
+    let path = 'abc#'
+    let parsed = v3m#url#_parse_path(path)
+    let expected = ['abc', '', '' ]
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_path_5()
+    let path = 'abc?d=1&e=2#f'
+    let parsed = v3m#url#_parse_path(path)
+    let expected = ['abc', 'd=1&e=2', 'f' ]
+
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_domain_1()
+    let domain = 'aaa.com:80'
+    let parsed = v3m#url#_parse_domain(domain)
+    let expected = [ 'aaa.com', '80' ]
+    Assert Equals(parsed, expected)
+  End
+
+  It url_parse_domain_2()
+    let domain = 'aaa.com'
+    let parsed = v3m#url#_parse_domain(domain)
+    let expected = [ 'aaa.com', '' ]
+
+    Assert Equals(parsed, expected)
+  End
+
+
+  It url_resolve_path_1()
+    let path = '/abc'
+    let base_path = '/def'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/abc'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_2()
+    let path = 'abc'
+    let base_path = '/def'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/abc'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_3()
+    let path = 'abc'
+    let base_path = '/def/ghi'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/def/abc'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_4()
+    let path = '../abc'
+    let base_path = '/def/ghi/'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/def/abc'
+    
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_5()
+    let path = '../../abc'
+    let base_path = '/def/ghi/'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/abc'
+    
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_6()
+    let path = '../abc'
+    let base_path = '/def/ghi/jkl'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/def/abc'
+    
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_7()
+    let path = '#abc'
+    let base_path = '/def/ghi/jkl'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/def/ghi/#abc'
+    
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_8()
+    let path = 'abc#def'
+    let base_path = '/ghi/jkl'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/ghi/abc#def'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_9()
+    let path = 'abc#def'
+    let base_path = '/ghi/jkl/'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/ghi/jkl/abc#def'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_percent_encode_1()
+    let str = ':/?#[]@'
+    let actual = v3m#url#percent_encode(str)
+    let expected = '%3A%2F%3F%23%5B%5D%40'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_percent_dencode_1()
+    let str = '%3A%2F%3F%23%5B%5D%40'
+    let actual = v3m#url#percent_decode(str)
+    let expected = ':/?#[]@'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_percent_dencode_2()
+    let str = '%3a%2f%3f%23%5b%5d%40'
+    let actual = v3m#url#percent_decode(str)
+    let expected = ':/?#[]@'
+
+    Assert Equals(actual, expected)
+  End
+End

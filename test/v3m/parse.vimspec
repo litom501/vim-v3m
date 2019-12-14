@@ -1,0 +1,51 @@
+" A web browser interface plugin for Vim
+" Author     : Koji Sato <litom501+vim@gmail.com>
+" License    : MIT License
+"
+Describe parse.vim
+
+  It parse_attribute_1()
+      Assert Equals(v3m#parse#attributes(''), [])
+  End
+
+  It parse_attribute_2()
+      Assert Equals(v3m#parse#attributes('abc=def'), [{ 'attr_name':'abc','attr_value' : 'def'}])
+  End
+
+  It parse_attribute_3()
+      Assert Equals(v3m#parse#attributes('abc = def'), [{ 'attr_name':'abc','attr_value' : 'def'}])
+  End
+
+  It parse_attribute_4()
+      Assert Equals(v3m#parse#attributes('  abc  =  def  '), [{ 'attr_name':'abc','attr_value' : 'def'}])
+  End
+
+  It parse_attribute_5()
+      Assert Equals(v3m#parse#attributes("abc='def'"), [{ 'attr_name':'abc','attr_value' : 'def'}])
+  End
+
+  It parse_attribute_6()
+      Assert Equals(v3m#parse#attributes('abc="def"'), [{ 'attr_name':'abc','attr_value' : 'def'}])
+  End
+
+  It parse_attribute_7()
+      Assert Equals(v3m#parse#attributes("abc='def ghi'"), [{ 'attr_name':'abc','attr_value' : 'def ghi'}])
+  End
+
+  It parse_attribute_8()
+      Assert Equals(v3m#parse#attributes('abc="def ghi"'), [{ 'attr_name':'abc','attr_value' : 'def ghi'}])
+  End
+
+  It parse_attribute_9()
+      Assert Equals(v3m#parse#attributes('abc'), [{ 'attr_name':'abc','attr_value' : ''}])
+  End
+
+  It parse_attribute_10()
+      Assert Equals(v3m#parse#attributes('abc='), [{ 'attr_name':'abc','attr_value' : ''}])
+  End
+
+  It split_elements()
+      Assert Equals(v3m#parse#split_elements('<abc def="ghi">jkl</abc>'), ['<abc def="ghi">', 'jkl', '</abc>'])
+  End
+
+End
