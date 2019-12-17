@@ -2,17 +2,9 @@
 
 ## Defect
 
-### % を含む URL を開く
-V3m コマンドで % を含む URLを開くとカレントファイル名に展開されてしまう。
-
-### タグ解析エラー
-
-タグが、> で閉じる前に改行されているとエラーが発生
-現状、w3m がタグ内で改行を発生させる html が再現できていない
-``
- <test a=''
-       b=''>
-``
+### html 以外の URL を開いた際の処理
+html 以外の URL を読み込んだ際に、html のソースとして処理使用とするので
+様々な問題が発生
 
 ### 折り返されたリンクでの遷移
 
@@ -31,6 +23,8 @@ V3m コマンドで % を含む URLを開くとカレントファイル名に展
 ### デフォルトマッピング定義
 
 ## Operations
+
+### TAB キーによるフォームコントロールへの遷移
 
 ### リンクを開く。new 相当
 キーバインド案
@@ -68,11 +62,23 @@ netrw の機能確認
 
 netrw の機能確認
 
+## Features
+
+### カーソル化の URL 表示
+カーソル化の URL を表示する機能
+
+### TAB キー、リンク遷移改善
+ページ先頭や最後のリンクで、Shift+TAB, TAB を使用した際に
+ベージ最後や先頭にリンクのフォーカスが遷移
+
 ### neovim 対応
 
 async.vim を使用する？
+→
+async.vim に切り替えたが、nvim では動作未検証
 
-## Features
+### support html5 entity name
+https://dev.w3.org/html5/html-author/charref
 
 ### 一行目にタイトルを表示
 オプション
@@ -94,7 +100,7 @@ intpu_alt type=submit サポート
 履歴を戻っても、現在から戻る先までの間の履歴を消さない
 
 ### ソース取得機能
-ただし、パフォーマンスを考慮し、通常のページ表示時には、ソースを同時に取得しない。
+ただし、パフォーマンスを考慮し、通常のページ表示時にはソースを同時に取得しない。
 
 ### ContentType または、ファイル拡張子によるコンテンツ変換サポート
 
@@ -130,6 +136,10 @@ w3m のダンプには、ヘッダ情報がふくまれないので難しい
 
 
 ## Implements
+
+### User-Agent の決定
+w3m -version で取得した値を使用。
+v3m もつける？ 各ブラウザがどのように、User-Agent を使用しているか確認する。
 
 ### ページパース時に、フォームの情報構築
 form_int, input_alt タグ fid属性
@@ -193,6 +203,63 @@ w3m プロセスの同時呼び出し数を設定できるようにする。
 
 ## Defect
 
+### タグ解析エラー 2020/01/11
+
+タグが、> で閉じる前に改行されているとエラーが発生
+現状、w3m がタグ内で改行を発生させる html が再現できていない
+→
+ローカルの html などを読み込む際に発生しやすい模様
+同一ファイルでも、発生する場合としない場合あり
+おそらく、タイミングによる問題発生。
+
+``
+ <test a=''
+       b=''>
+``
+
+#### 原因
+おそらく、job の out_cb がすべて呼び出される前に exit_cb が呼び出されているため
+中途半端な読み込み状態で、パース処理が開始されている
+close_cb の後であれば問題なさそう。
+vim のドキュメントには、exit_cb が呼び出された後にも、コールバックが呼び出される可能性があるとも読み取れる記載あり
+
+async.vim を修正することで対応可能かを検討
+
+#### 対応
+とりあえず、現象が発生する default_handler のみに簡易的な回避実装
+
+### 相対URL 時のリダイレクト処理
+リダイレクト時、Location ヘッダに相対パスが設定されている場合がある。
+この URL を保存する際に、相対パスのみを保存している
+
+### E303: Unable to open swap file
+クエリ文字列を含むなどの非常に長い URL を開く際に以下のエラーが発生
+
+'''
+Error detected while processing function v3m#open_v3m[3]..v3m#open[29]..<SNR>119_configure_buffer:
+line   12:
+E303: Unable to open swap file for "v3m://https://xxxxxxxxxxxxxxx.com/articles/newsjp/xxxxxxxx-xxxxxx/?__cf_chl_jschl_tk__=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", recovery impossible
+
+'''
+
+#### 対応
+setlocal noswapfile
+
+#### 検討
+バッファ名にクエリ文字列を含める必要があるか
+
+### % を含む URL を開く
+V3m コマンドで % を含む URLを開くとカレントファイル名に展開されてしまう。
+
+#### 対応
+URL を取り扱うための V3m とローカルファイルを取り扱うための V3mLocal を分ける
+
+#### メモ
+:command -complete=file を使用すると % が自動的に展開される模様
+
 ### スラッシュなしで開始する相対リンク。 
 最初のパスセグメントがドメイン扱いとなっている
 ```
@@ -213,14 +280,14 @@ resolve: /xxxx/yyy/aaa/bbb.html
 
 ### :e v3m://` で g:v3m#homepage が表示されない
 
-一部のマシンで、 `:e v3m://` を実行した際に、g:v3m### homepage が設定されていても、ページが表示されない場合がある
+一部のマシンで `:e v3m://` を実行した際に、g:v3m#homepage が設定されていてもページが表示されない場合がある
 バッファ変数が正常に設定されていないことが原因となっている。このケースで bufload() は、エラーとなっていた。
 -> バッファのリネーム処理の際の、リネーム前の名前を持つバッファ消込処理に問題があった。正しいバッファ番号が取得されていなかった
 
 ### 同一 URL を開く際のバッファ処理
 
-一回開いたバッファで、"戻る"等などで同じ URL を再び開こうとすると、別のバッファが使用される。 :file で名前を変えると、元
-の名前のバッファが unlisted で作成されるため
+一回開いたバッファで、"戻る"等などで同じ URL を再び開こうとすると、別のバッファが使用される。 :file で名前を変えると、
+元の名前のバッファが unlisted で作成されるため
 
 ### fragment に遷移しないケースがある
 
@@ -263,6 +330,9 @@ resolve: /xxxx/yyy/aaa/bbb.html
 
 ## Features
 
+### リダイレクト先の URL を表示
+curl を使用して、リダイレクトサポートしつつ、ヘッダ・ソースを取得
+
 ### 機能要件のチェック。 w3m, +job, +channel など
 ### デフォルトページサポート  -> g:v3m#homepage
 ### BufReadCmd 対応。 -> e v3m://{URL}
@@ -297,5 +367,5 @@ open タグに対応する閉じタグより前に、他の閉じタグが発生
 ## Implements
 ### ファイルの連番を廃止
 多分不要なため
--> :file  実行時、同名のファイルがあるとエラーとなるため、必要
+-> :file  実行時、同名のファイルがあるとエラーになるため、必要
 

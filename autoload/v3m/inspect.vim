@@ -29,19 +29,27 @@ function! v3m#inspect#dump(bufnr='%') abort
   call append('$', '-- domain')
   call append('$', v3m['domain'])
 
+  " response headers
+  call append('$', '-- response headers')
+  if has_key(v3m, 'response_headers')
+    let headers = v3m['response_headers']
+    for header in headers
+      call append('$s', printf('%s', header))
+    endfor
+  else
+    call append('$s', 'no response headers')
+  endif
+
   " meta
   call append('$', '-- meta')
   call append('$', map(copy(v3m['meta']), { i, v -> printf("%s", v)}))
 
   " fragments
   call append('$', '-- fragments')
-  "call append('$', map(copy(v3m['fragments']), { k, v -> printf("%s : %s", k, v)}))
-  "call append('$', map(copy(v3m['fragments']), { k, v -> printf("%s ", k)}))
   call append('$', printf("%s", v3m['fragments']))
 
   " forms
   call append('$', '-- forms')
-  "call append('$', map(copy(v3m['forms']), { k, v -> printf("%s : %s", k, v)}))
   call append('$', printf("%s", v3m['forms']))
 
   set nomodified
@@ -51,13 +59,9 @@ endfunction
 function! v3m#inspect#cursor() abort
   let bufnr = bufnr('%')
   let props = v3m#util#get_prop(bufnr, line('.'), col('.'))
-  let links = filter(copy(props),
+  let links = filter(props,
                     \{ idx, value -> v3m#util#filter_array_by_map_value('type', 'v3m#link')(idx, value) })
-
   let meta = v3m#page#get_meta(bufnr)
-
-  " clear message
-  "echom ''
 
   if len(links) > 0
     let link = meta[links[0]['id']]

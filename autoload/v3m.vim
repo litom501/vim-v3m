@@ -47,7 +47,7 @@ function! v3m#open_v3m(url='') abort
   if len(a:url) >= len(prefix) && a:url[0:len(prefix) - 1] ==# prefix
     call v3m#open(a:url[len(prefix):])
   else
-    echoerr s:v3m_error 'Invalid argument.'
+    echoerr s:v3m_error 'Invalid argument. :' a:url
   endif
 endfunction
 
@@ -59,6 +59,13 @@ function! v3m#input_location() abort
   let new_url = input(s:v3m . ' Location : ', url, 'file')
   if !empty(new_url)
     call v3m#open(new_url)
+  endif
+endfunction
+
+function! v3m#show_cursor_link() abort
+  let url = v3m#get_curlink()
+  if !empty(url)
+    call input('link : ', url)
   endif
 endfunction
 
@@ -99,7 +106,8 @@ function! v3m#open(url='', mode = 0) abort
 
   call s:configure_buffer(bufnr)
   call setbufvar(bufnr, '&modifiable', 1)
-  execute 'normal I' . 'loading... : ' . url
+  execute 'normal I' . 'Loading... : ' . url
+  call setpos('.', [bufnr, 1, 1, 0])
   call setbufvar(bufnr, '&modifiable', 0)
 
   call v3m#util#rename_buffer(bufnr, bufname)
@@ -117,6 +125,15 @@ function! v3m#open(url='', mode = 0) abort
   let cols = min([win_cols, max_cols])
 
   call v3m#handler#job_start(url, bufnr, cols)
+endfunction
+
+function! v3m#rename_buffer_by_url(bufnr, url) abort
+  let normalized_url = v3m#url#normalize(a:url)
+  let bufname = v3m#create_bufname(normalized_url, 1)
+
+  call v3m#util#rename_buffer(a:bufnr, bufname)
+  call v3m#page#set_param(a:bufnr, 'url', a:url)
+  call v3m#page#set_param(a:bufnr, 'domain', v3m#url#domain(a:url))
 endfunction
 
 function! v3m#create_bufname(url, reuse_buffer) abort
@@ -142,8 +159,8 @@ function! s:configure_buffer(bufnr) abort
     execute 'buffer ' . a:bufnr
   endif
 
-  set filetype=v3m
-
+  setlocal filetype=v3m
+  setlocal noswapfile
   setlocal modifiable
 
   " supress message "--No lines in buffer--
@@ -239,6 +256,7 @@ function! s:action(input) abort
 
   let bufnr = bufnr('%')
   let form = v3m#page#get_forms(bufnr)[fid]
+  let charset = v3m#page#get_param(bufnr, 'charset')
 
   if type ==# 'text'
     let inputs = get(form, 'input_alt')
@@ -263,7 +281,12 @@ function! s:action(input) abort
       if !empty(query)
         let query .= '&'
       endif
-      let query .= key . '=' . get(inputs[key], '#current_value', value)
+      let v = get(inputs[key], '#current_value', value)
+      if !empty(charset)
+        let v = iconv(v, 'utf-8', charset)
+        let v = v3m#util#str2percent(v)
+      endif
+      let query .= key . '=' . v
     endfor
     let form_int = get(form, 'form_int')
     if !empty(form_int)
@@ -275,7 +298,7 @@ function! s:action(input) abort
         let current_url = v3m#page#get_param(bufnr, 'url')
         let current_url = v3m#url#normalize(current_url)
         let url = v3m#url#normalize(v3m#url#resolve(href, current_url), domain)
-        echo 'url' url
+
         call v3m#open(url)
       endif
     endif
@@ -312,15 +335,28 @@ function! v3m#next_link(back=0) abort
 
   for i in line_range
     let props = v3m#util#get_prop(bufnr, i)
-    let links = filter(copy(props),
-                    \{ idx, value -> v3m#util#filter_array_by_map_value('type', 'v3m#link')(idx, value) })
-
     let links_meta = []
+
+    " links
+    let links = v3m#util#filter(props,
+                    \{ idx, value -> v3m#util#filter_array_by_map_value('type', 'v3m#link')(idx, value) })
     for link in links
       let data = meta[link['id']]
       let attributes = data['attributes']
       let href = v3m#util#find_by_map_value(attributes, 'attr_name', 'href')
       if !empty(href)
+        call add(links_meta, meta[link['id']])
+      endif
+    endfor
+
+    " form input
+    let links = v3m#util#filter(props,
+                    \{ idx, value -> v3m#util#filter_array_by_map_value('type', 'v3m#form')(idx, value) })
+    for link in links
+      let data = meta[link['id']]
+      let attributes = data['attributes']
+      let form_element = v3m#util#find_by_map_value(attributes, 'attr_name', 'type')
+      if !empty(form_element) && get(form_element, 'attr_value') !=? 'hidden'
         call add(links_meta, meta[link['id']])
       endif
     endfor
@@ -396,7 +432,7 @@ endfunction
 function! s:get_cur_forminput() abort
   let bufnr = bufnr('%')
   let props = v3m#util#get_prop(bufnr, line('.'), col('.'))
-  let inputs = filter(copy(props),
+  let inputs = v3m#util#filter(props,
                     \{ idx, value -> v3m#util#filter_array_by_map_value('type', 'v3m#form')(idx, value) })
 
   let meta = v3m#page#get_meta(bufnr)
@@ -425,7 +461,7 @@ endfunction
 function! v3m#get_curlink() abort
   let bufnr = bufnr('%')
   let props = v3m#util#get_prop(bufnr, line('.'), col('.'))
-  let links = filter(copy(props),
+  let links = v3m#util#filter(props,
                     \{ idx, value -> v3m#util#filter_array_by_map_value('type', 'v3m#link')(idx, value) })
   let meta = v3m#page#get_meta(bufnr)
 

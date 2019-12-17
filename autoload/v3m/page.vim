@@ -52,6 +52,22 @@ function! v3m#page#clear_forms(bufnr) abort
   call v3m#page#set_param(a:bufnr, 'forms', {})
 endfunction
 
+function! v3m#page#get_source(bufnr) abort
+  return v3m#page#get_param(a:bufnr, 'source', [])
+endfunction
+
+function! v3m#page#clear_source(bufnr) abort
+  call v3m#page#set_param(a:bufnr, 'source', [])
+endfunction
+
+function! v3m#page#get_response_headers(bufnr) abort
+  return v3m#page#get_param(a:bufnr, 'response_headers', [])
+endfunction
+
+function! v3m#page#clear_response_headers(bufnr) abort
+  call v3m#page#set_param(a:bufnr, 'response_headers', [])
+endfunction
+
 function! v3m#page#get_param(bufnr, param_name, default='') abort
   let v3m = v3m#page#get_v3m(a:bufnr)
   if has_key(v3m, a:param_name)

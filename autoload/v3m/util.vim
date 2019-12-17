@@ -49,6 +49,19 @@ function! v3m#util#get_prop(bufnr, lnum, col=-1) abort
 
   return rv
 endfunction
+
+function! v3m#util#filter(list, comparator) abort
+  let rv = []
+  for idx in range(len(a:list))
+    let value = a:list[idx]
+    let b = a:comparator(idx, value)
+    if b
+      call add(rv, value)
+    endif
+  endfor
+  return rv
+endfunction
+
 function! v3m#util#filter_array_by_map_value(key, value) abort
   return { idx, value -> value[a:key] ==# a:value }
 endfunction
@@ -112,6 +125,15 @@ function! v3m#util#utf82str(utf8) abort
   for i in range(len(a:utf8))
     " FIXME Check how to decode without using printf.
     call add(rv, printf("\\x%x", a:utf8[i]))
+  endfor
+  return eval('"' . join(rv,'') . '"')
+endfunction
+
+" FIXME TEST
+function! v3m#util#str2percent(str) abort
+  let rv = []
+  for i in range(len(a:str))
+    call add(rv, printf("%%%x", char2nr(a:str[i])))
   endfor
   return eval('"' . join(rv,'') . '"')
 endfunction
@@ -312,7 +334,10 @@ let s:char_entity_ref = {
 \ 'uuml':0xFC,
 \ 'yacute':0xFD,
 \ 'thorn':0xFE,
-\ 'yuml':0xFF
+\ 'yuml':0xFF,
+\ 'rarr':0x021D2,
 \ }
+" rarr -> html5 entity name
+" https://dev.w3.org/html5/html-author/charref
 
 " vim: tabstop=2 shiftwidth=2 expandtab

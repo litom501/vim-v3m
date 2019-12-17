@@ -12,7 +12,12 @@ let s:v3m_warn  = s:v3m . '[WARN ]'
 let s:v3m_command = 'w3m'
 
 " check features
-let s:requirement_features = [ 'job', 'channel' ]
+if has('nvim')
+  let s:requirement_features = []
+else
+  let s:requirement_features = [ 'job', 'channel', 'lambda' ]
+endif
+
 let s:has_features = 1
 for requirement in s:requirement_features
   let s:has_features = s:has_features && has(requirement)
@@ -39,7 +44,11 @@ augroup v3m
   autocmd! BufReadCmd v3m://* call v3m#open_v3m(expand('<amatch>'))
 augroup END
 
-command! -nargs=? -complete=file V3m :execute ':edit v3m://' . <q-args>
+" https://github.com/vim-jp/issues/issues/616
+"-complete=file をつけると、# ゃ % を含む URL を引き渡した際に q-args を展開した時点で、補間が適用されている
+"command! -nargs=? -complete=file V3m :execute ':edit v3m://' . fnameescape(<q-args>)
+command! -nargs=? V3m :execute ':edit v3m://' . fnameescape(<q-args>)
+command! -nargs=? -complete=file V3mLocal :execute ':edit v3m://' . fnameescape(<q-args>)
 
 nnoremap <silent> <Plug>(v3m-open-link)        :<C-U>call v3m#open_link()<CR>
 nnoremap <silent> <Plug>(v3m-open-link-tab)    :<C-U>if !empty(v3m#get_curlink())\|execute 'tabnew v3m://' . fnameescape(v3m#get_curlink())\|endif<CR>
@@ -49,6 +58,7 @@ nnoremap <silent> <Plug>(v3m-reload-page)      :<C-U>call v3m#reload()<CR>
 nnoremap <silent> <Plug>(v3m-next-link)        :<C-U>call v3m#next_link()<CR>
 nnoremap <silent> <Plug>(v3m-previous-link)    :<C-U>call v3m#next_link(1)<CR>
 nnoremap <silent> <Plug>(v3m-show-locationbar) :<C-U>call v3m#input_location()<CR>
+nnoremap <silent> <Plug>(v3m-show-cursor-link) :<C-U>call v3m#show_cursor_link()<CR>
 nnoremap <silent> <Plug>(v3m-back-history)     :<C-U>call v3m#back()<CR>
 nnoremap <silent> <Plug>(v3m-show-history)     :<C-U>call v3m#back_history()<CR>
 

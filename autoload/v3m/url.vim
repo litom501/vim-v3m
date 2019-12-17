@@ -89,9 +89,9 @@ function! v3m#url#parse(url) abort
   if a:url[0] == '/'
     let path = v3m#url#_parse_path(a:url)
 
-    let rv['path'] = path[0]
-    let rv['query'] = path[1]
-    let rv['fragment'] = path[2]
+    let rv.path = path[0]
+    let rv.query = path[1]
+    let rv.fragment = path[2]
 
     return rv
   endif
@@ -101,9 +101,9 @@ function! v3m#url#parse(url) abort
   if strpos[1] == -1
     let path = v3m#url#_parse_path(a:url)
 
-    let rv['path'] = path[0]
-    let rv['query'] = path[1]
-    let rv['fragment'] = path[2]
+    let rv.path = path[0]
+    let rv.query = path[1]
+    let rv.fragment = path[2]
 
     return rv
   else

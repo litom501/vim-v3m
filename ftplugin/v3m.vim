@@ -20,6 +20,9 @@ endif
 if !hasmapto('<Plug>(v3m-open-link-tab)')
   nmap <buffer> <unique>  <S-O> <Plug>(v3m-open-link-tab)
 endif
+if !hasmapto('<Plug>(v3m-show-cursor-link)')
+  nmap <buffer> <unique> c <Plug>(v3m-show-cursor-link)
+endif
 
 if !hasmapto('<Plug>(v3m-back-history)')
   nmap <buffer> <unique>  <BS> <Plug>(v3m-back-history)

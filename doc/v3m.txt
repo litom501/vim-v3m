@@ -38,6 +38,7 @@ TODO
 
 command
   v3m
+  curl
 
 vim features
   +job +channel
