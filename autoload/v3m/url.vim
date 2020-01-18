@@ -8,7 +8,8 @@ let s:v3m_error = s:v3m . '[ERROR]'
 let s:v3m_warn  = s:v3m . '[WARN ]'
 
 " normalize url. e.g. completion protcol
-function! v3m#url#normalize(url, domain='') abort
+"function! v3m#url#normalize(url, domain='') abort
+function! v3m#url#normalize(url, domain) abort
   if a:url == ''
     echoerr s:v3m_error 'Invalid argument.'
   endif

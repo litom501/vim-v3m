@@ -42,10 +42,10 @@ function! s:get_url(v3m_uri) abort
   endif
 endfunction
 
-function! v3m#open_v3m(url='') abort
+function! v3m#open_v3m(url) abort
   let prefix = 'v3m://'
   if len(a:url) >= len(prefix) && a:url[0:len(prefix) - 1] ==# prefix
-    call v3m#open(a:url[len(prefix):])
+    call v3m#open(a:url[len(prefix):], 0)
   else
     echoerr s:v3m_error 'Invalid argument. :' a:url
   endif
@@ -55,10 +55,10 @@ function! v3m#input_location() abort
   let bufnr = bufnr('%')
   call s:validate_v3m_buffer(bufnr)
 
-  let url = v3m#page#get_param(bufnr, 'url')
+  let url = v3m#page#get_param(bufnr, 'url', '')
   let new_url = input(s:v3m . ' Location : ', url, 'file')
   if !empty(new_url)
-    call v3m#open(new_url)
+    call v3m#open(new_url, 0)
   endif
 endfunction
 
@@ -75,7 +75,8 @@ function! s:validate_v3m_buffer(bufnr) abort
   end
 endfunction
 
-function! v3m#open(url='', mode = 0) abort
+"function! v3m#open(url='', mode = 0) abort
+function! v3m#open(url, mode) abort
   let bare_url = trim(a:url)
 
   if empty(bare_url)
@@ -86,7 +87,7 @@ function! v3m#open(url='', mode = 0) abort
     endif
   endif
 
-  let url = v3m#url#normalize(bare_url)
+  let url = v3m#url#normalize(bare_url, '')
   let bufname = v3m#create_bufname(url, 1)
   let bufnr = bufnr('%')
 
@@ -128,7 +129,7 @@ function! v3m#open(url='', mode = 0) abort
 endfunction
 
 function! v3m#rename_buffer_by_url(bufnr, url) abort
-  let normalized_url = v3m#url#normalize(a:url)
+  let normalized_url = v3m#url#normalize(a:url, '')
   let bufname = v3m#create_bufname(normalized_url, 1)
 
   call v3m#util#rename_buffer(a:bufnr, bufname)
@@ -256,7 +257,7 @@ function! s:action(input) abort
 
   let bufnr = bufnr('%')
   let form = v3m#page#get_forms(bufnr)[fid]
-  let charset = v3m#page#get_param(bufnr, 'charset')
+  let charset = v3m#page#get_param(bufnr, 'charset', '')
 
   if type ==# 'text'
     let inputs = get(form, 'input_alt')
@@ -294,12 +295,12 @@ function! s:action(input) abort
       if !empty(action)
         let query = tr(query, ' ', '+')
         let href = action . '?' . query
-        let domain = v3m#page#get_param(bufnr, 'domain')
-        let current_url = v3m#page#get_param(bufnr, 'url')
-        let current_url = v3m#url#normalize(current_url)
+        let domain = v3m#page#get_param(bufnr, 'domain', '')
+        let current_url = v3m#page#get_param(bufnr, 'url', '')
+        let current_url = v3m#url#normalize(current_url, '')
         let url = v3m#url#normalize(v3m#url#resolve(href, current_url), domain)
 
-        call v3m#open(url)
+        call v3m#open(url, 0)
       endif
     endif
   endif
@@ -310,7 +311,7 @@ function! v3m#open_link() abort
   let url = v3m#get_curlink()
 
   if !empty(url)
-    call v3m#open(url)
+    call v3m#open(url, 0)
   else
     let input = s:get_cur_forminput()
     if !empty(input)
@@ -320,7 +321,7 @@ function! v3m#open_link() abort
   endif
 endfunction
 
-function! v3m#next_link(back=0) abort
+function! v3m#next_link(back) abort
   let bufnr = bufnr('%')
   let current_line = line('.')
   let current_col = col('.')
@@ -334,7 +335,7 @@ function! v3m#next_link(back=0) abort
   endif
 
   for i in line_range
-    let props = v3m#util#get_prop(bufnr, i)
+    let props = v3m#util#get_prop(bufnr, i, -1)
     let links_meta = []
 
     " links
@@ -343,7 +344,7 @@ function! v3m#next_link(back=0) abort
     for link in links
       let data = meta[link['id']]
       let attributes = data['attributes']
-      let href = v3m#util#find_by_map_value(attributes, 'attr_name', 'href')
+      let href = v3m#util#find_by_map_value(attributes, 'attr_name', 'href', 0)
       if !empty(href)
         call add(links_meta, meta[link['id']])
       endif
@@ -355,7 +356,7 @@ function! v3m#next_link(back=0) abort
     for link in links
       let data = meta[link['id']]
       let attributes = data['attributes']
-      let form_element = v3m#util#find_by_map_value(attributes, 'attr_name', 'type')
+      let form_element = v3m#util#find_by_map_value(attributes, 'attr_name', 'type', 0)
       if !empty(form_element) && get(form_element, 'attr_value') !=? 'hidden'
         call add(links_meta, meta[link['id']])
       endif
@@ -470,9 +471,9 @@ function! v3m#get_curlink() abort
     let attributes = link['attributes']
     let href = v3m#util#find_by_map_value(attributes, 'attr_name', 'href', 1)['attr_value']
     let href = v3m#util#decode_char_entity_ref(href)
-    let domain = v3m#page#get_param(bufnr, 'domain')
-    let current_url = v3m#page#get_param(bufnr, 'url')
-    let current_url = v3m#url#normalize(current_url)
+    let domain = v3m#page#get_param(bufnr, 'domain', '')
+    let current_url = v3m#page#get_param(bufnr, 'url', '')
+    let current_url = v3m#url#normalize(current_url, '')
     let url = v3m#url#normalize(v3m#url#resolve(href, current_url), domain)
 
     return url

@@ -39,6 +39,8 @@ TODO
 command
   w3m
   curl
+  prabirshrestha/async.vim
+
 
 vim features
   +job +channel +timer
@@ -92,6 +94,10 @@ e.g.
 
 ==============================================================================
 4. CHANGELOG                                                   *v3m-changelog*
+
+0.3   2020-01-25
+    - 不具合 Content-type の解析不具合修正
+    - 改善 NeoVim サポートに向けたリファクタリング
 
 0.2   2020-01-13
     - 不具合 V3m コマンド実行時に、%ゃ # が勝手に展開される不具合を修正

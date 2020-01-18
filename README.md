@@ -4,8 +4,11 @@ v3m-v3m is a web browser interface plugin for Vim. See [help](doc/v3m.txt) for d
 
 ## Requirements
 
-* Vim 8.1 latest
+* Vim 8.2 latest
 * w3m
+* curl
+* prabirshrestha/async.vim
+
 
 ## TODO
 
@@ -33,11 +36,10 @@ v3m-v3m is a web browser interface plugin for Vim. See [help](doc/v3m.txt) for d
 ### Cons
 #### 対応可能?
 
-*    フォーム未対応
 *    cookie 未対応
 *    ページのキャッシュ
 
-### 対応不可?
+#### 対応不可?
 
 *    画像表示
 *    ベーシック認証、ダイジェスト認証

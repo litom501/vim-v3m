@@ -24,10 +24,10 @@ function! v3m#handler#job_start(url, bufnr, cols) abort
   endif
 
   let jobid = async#job#start(handler.cmd(a:url, a:cols),
-        \#{
-        \   on_stdout: handler.on_stdout,
-        \   on_exit: handler.on_exit,
-        \   on_stderr: handler.on_stderr,
+        \{
+        \   "on_stdout": handler.on_stdout,
+        \   "on_exit": handler.on_exit,
+        \   "on_stderr": handler.on_stderr,
         \})
   let s:job_context.sequences[jobid] = s:sequence
 endfunction
@@ -37,7 +37,7 @@ function! v3m#handler#render_page(bufnr)
   let meta = v3m#page#get_meta(a:bufnr)
   let fragments = v3m#page#get_fragments(a:bufnr)
   let forms = v3m#page#get_forms(a:bufnr)
-  let url = v3m#page#get_param(a:bufnr, 'url')
+  let url = v3m#page#get_param(a:bufnr, 'url', '')
   let tag_stack = []
 
   call setbufvar(a:bufnr, '&modifiable', 1)
@@ -86,7 +86,7 @@ function! v3m#handler#render_page(bufnr)
       let open_tag = remove(tag_stack, len(tag_stack) - 1)
 
       " unclosed tag
-      call v3m#parse#add_tag_data(url, meta, fragments, forms, prop_list, a:bufnr, open_tag)
+      call v3m#parse#add_tag_data(url, meta, fragments, forms, prop_list, a:bufnr, open_tag, '', '')
     endwhile
 
     call setbufline(a:bufnr, i + 1, join(texts, ''))
@@ -118,7 +118,7 @@ function! s:render_page(bufnr, contents) abort
 endfunction
 
 function! v3m#handler#render_downloading_page(bufnr) abort
-  let url = v3m#page#get_param(a:bufnr, 'url')
+  let url = v3m#page#get_param(a:bufnr, 'url', '')
   let contents = [
         \ 'Downloading...',
         \ '',
@@ -128,7 +128,7 @@ function! v3m#handler#render_downloading_page(bufnr) abort
 endfunction
 
 function! v3m#handler#render_download_page(bufnr) abort
-  let url = v3m#page#get_param(a:bufnr, 'url')
+  let url = v3m#page#get_param(a:bufnr, 'url', '')
   let contents = [
         \ 'Download',
         \ '',
@@ -138,7 +138,7 @@ function! v3m#handler#render_download_page(bufnr) abort
 endfunction
 
 function! v3m#handler#render_download_cancel_page(bufnr) abort
-  let url = v3m#page#get_param(a:bufnr, 'url')
+  let url = v3m#page#get_param(a:bufnr, 'url', '')
   let contents = [
         \ 'Canceled download file',
         \ '',
@@ -148,7 +148,7 @@ function! v3m#handler#render_download_cancel_page(bufnr) abort
 endfunction
 
 function! v3m#handler#render_error_page(bufnr) abort
-  let url = v3m#page#get_param(a:bufnr, 'url')
+  let url = v3m#page#get_param(a:bufnr, 'url', '')
   let contents = [
         \ 'ERROR',
         \ '  Connection refused.',
@@ -212,7 +212,7 @@ function! s:default_cmd(url, cols) abort
   return cmd
 endfunction
 
-function! s:default_out(jobid, msg, event_type='stdout') abort
+function! s:default_out(jobid, msg, event_type) abort
   let sequence = s:get_sequence(a:jobid)
   let page = v3m#page#get_page(s:get_bufnr(sequence))
 
@@ -228,7 +228,7 @@ function! s:default_close_wrap_1(jobid, exit_code, event_type, timer_id) abort
   call s:default_close(a:jobid, a:exit_code, a:event_type)
 endfunction
 
-function! s:default_close(jobid, exit_code=0, event_type='exit') abort
+function! s:default_close(jobid, exit_code, event_type) abort
   let sequence = s:get_sequence(a:jobid)
   let bufnr = s:get_bufnr(sequence)
 
@@ -246,7 +246,7 @@ function! s:default_close(jobid, exit_code=0, event_type='exit') abort
   call s:remove_sequence(a:jobid)
 endfunction
 
-function! s:default_error(jobid, msg, event_type='stderr') abort
+function! s:default_error(jobid, msg, event_type) abort
   "echom 'default_error' a:msg
 
   let sequence = s:get_sequence(a:jobid)
@@ -265,16 +265,6 @@ function! s:curl_out(jobid, msg, event_type) abort
   let source = v3m#page#get_source(s:get_bufnr(sequence))
 
   call s:data_out(a:jobid, a:msg, source)
-endfunction
-
-function! s:get_header_to(source, from) abort
-  if len(a:source) < a:from
-    return -1
-  endif
-  if matchstrpos(a:source[a:from], '^HTTP.*\r')[1] != 0
-    return -1
-  endif
-  return index(a:source, "\r", a:from)
 endfunction
 
 function! s:curl_close(jobid, exit_code, event_type) abort
@@ -296,12 +286,13 @@ function! s:curl_close(jobid, exit_code, event_type) abort
 
     let header = {}
     while 1
-      let tmp = s:get_header_to(source, header_to + 1)
+      "let tmp = s:get_header_to(source, header_to + 1)
+      let tmp = v3m#header#get_header_to(source, header_to + 1)
       if tmp != -1
         let header_from = header_to + 1
         let header_to = tmp
 
-        let header = s:parse_response_header(source[header_from:header_to])
+        let header = v3m#header#parse_response_header(source[header_from:header_to])
         call add(response_headers, header)
 
         let header = s:normalize_keys(header)
@@ -326,11 +317,13 @@ function! s:curl_close(jobid, exit_code, event_type) abort
     call v3m#page#clear_source(bufnr)
 
     let content_type = get(header, 'content-type')
-    let type = s:get_content_type_type(content_type)
+    "let type = s:get_content_type_type(content_type)
+    let type = v3m#header#get_content_type_type(content_type)
 
     " content-type : text
     if len(matchstr(type, '^\ctext/')) != 0
-      let charset = s:get_content_type_charset(content_type)
+      "let charset = s:get_content_type_charset(content_type)
+      let charset = v3m#header#get_content_type_charset(content_type)
       call v3m#page#set_param(bufnr, 'charset', charset)
 
       let charset_option = empty(charset) ? '' : '-I ' . charset
@@ -345,7 +338,7 @@ function! s:curl_close(jobid, exit_code, event_type) abort
       call v3m#handler#render_downloading_page(bufnr)
       redraw
 
-      let url = v3m#page#get_param(bufnr, 'url')
+      let url = v3m#page#get_param(bufnr, 'url', '')
       let url_elements = v3m#url#parse(url)
 
       let path = url_elements.path
@@ -382,52 +375,63 @@ function! s:normalize_keys(dict) abort
   return rv
 endfunction
 
-function! s:get_content_type_type(content_type) abort
-  let list = matchlist(a:content_type, '\c^[ ]*\([^ ;]\+\)[ ]*;')
-  if empty(list)
-    return ''
-  else
-    return list[1]
-  endif
-endfunction
+"function! s:get_header_to(source, from) abort
+"  if len(a:source) < a:from
+"    return -1
+"  endif
+"  if matchstrpos(a:source[a:from], '^HTTP.*\r')[1] != 0
+"    return -1
+"  endif
+"  return index(a:source, "\r", a:from)
+"endfunction
 
-function! s:get_content_type_charset(content_type) abort
-  let list = matchlist(a:content_type, '\c;[ ]*charset=\(\%(\w\|\-\)*\)')
-  if empty(list)
-    return ''
-  else
-    return list[1]
-  endif
-endfunction
+"" TODO test
+"function! s:get_content_type_type(content_type) abort
+"  let list = matchlist(a:content_type, '\c^[ ]*\([^ ;]\+\)[ ]*;')
+"  if empty(list)
+"    return ''
+"  else
+"    return list[1]
+"  endif
+"endfunction
 
-function! s:parse_response_header(response_headers) abort
-  if len(a:response_headers) == 0
-    return {}
-  endif
-  let status_line = matchlist(a:response_headers[0], 'HTTP/\([^ ]\+\) \([^ ]\+\) \(.*\)\r')
-  if empty(status_line)
-    echom 'empty status_line' a:response_headers
-    return {}
-  endif
+"function! s:get_content_type_charset(content_type) abort
+"  let list = matchlist(a:content_type, '\c;[ ]*charset=\(\%(\w\|\-\)*\)')
+"  if empty(list)
+"    return ''
+"  else
+"    return list[1]
+"  endif
+"endfunction
 
-  let list = {}
-  let list[':HTTP-Version'] = status_line[1]
-  let list[':Status-Code'] = status_line[2]
-  let list[':Reason-Phrase'] = status_line[3]
-
-  for i in range(len(a:response_headers))
-    let pos = matchstrpos(a:response_headers[i], '^[^:]\+\zs:.*\r$')
-    if pos[1] == -1
-      continue
-    else
-      let key = a:response_headers[i][0:pos[1]-1]
-      let value = trim(a:response_headers[i][pos[1]+1:])
-      let list[key] = value
-    endif
-  endfor
-
-  return list
-endfunction
+"function! s:parse_response_header(response_headers) abort
+"  if len(a:response_headers) == 0
+"    return {}
+"  endif
+"  let status_line = matchlist(a:response_headers[0], 'HTTP/\([^ ]\+\) \([^ ]\+\) \(.*\)\r')
+"  if empty(status_line)
+"    echom 'empty status_line' a:response_headers
+"    return {}
+"  endif
+"
+"  let list = {}
+"  let list[':HTTP-Version'] = status_line[1]
+"  let list[':Status-Code'] = status_line[2]
+"  let list[':Reason-Phrase'] = status_line[3]
+"
+"  for i in range(len(a:response_headers))
+"    let pos = matchstrpos(a:response_headers[i], '^[^:]\+\zs:.*\r$')
+"    if pos[1] == -1
+"      continue
+"    else
+"      let key = a:response_headers[i][0:pos[1]-1]
+"      let value = trim(a:response_headers[i][pos[1]+1:])
+"      let list[key] = value
+"    endif
+"  endfor
+"
+"  return list
+"endfunction
 
 let s:user_agent = ''
 
@@ -439,37 +443,35 @@ function! s:get_user_agent() abort
 endfunction
 
 
-function! s:curl_error(jobid, msg, event_type='stderr') abort
+function! s:curl_error(jobid, msg, event_type) abort
   "echom 'default_error' a:msg
 endfunction
 
-let s:default_handler = #{
-  \ cmd: function('s:default_cmd'),
-  \ on_stdout: function('s:default_out'),
-  \ on_exit: function('s:default_close_wrap'),
-  \ on_stderr: function('s:default_error'),
+let s:default_handler = {
+  \ 'cmd': function('s:default_cmd'),
+  \ 'on_stdout': function('s:default_out'),
+  \ 'on_exit': function('s:default_close_wrap'),
+  \ 'on_stderr': function('s:default_error'),
   \}
 
-let s:curl_w3m_handler = #{
-  \ cmd: function('s:curl_cmd'),
-  \ on_stdout: function('s:curl_out'),
-  \ on_exit: function('s:curl_close'),
-  \ on_stderr: function('s:curl_error'),
+let s:curl_w3m_handler = {
+  \ 'cmd': function('s:curl_cmd'),
+  \ 'on_stdout': function('s:curl_out'),
+  \ 'on_exit': function('s:curl_close'),
+  \ 'on_stderr': function('s:curl_error'),
   \}
 
-let s:sequence_options = #{
-  \   buffers: {},
-  \   urls: {},
-  \   cols: {},
+let s:sequence_options = {
+  \   'buffers': {},
+  \   'urls': {},
+  \   'cols': {},
   \}
 
-let s:job_context = #{
-  \ sequences: {},
-  \ lastmsg: {}
+let s:job_context = {
+  \ 'sequences': {},
+  \ 'lastmsg': {}
   \}
 
-"let s:handler = s:default_handler
-"let s:handler = s:curl_w3m_handler
 let s:local_handler = s:default_handler
 "let s:remote_handler = s:default_handler
 let s:remote_handler = s:curl_w3m_handler

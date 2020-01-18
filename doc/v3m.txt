@@ -39,9 +39,10 @@ TODO
 command
   v3m
   curl
+  prabirshrestha/async.vim
 
 vim features
-  +job +channel
+  +job +channel +timer
 
 ==============================================================================
 3. INTERFACE                                                   *v3m-interface*

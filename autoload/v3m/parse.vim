@@ -126,35 +126,35 @@ endfunction
 
 function! s:configure_prop_type() abort
   if empty(prop_type_get('v3m#link'))
-    call prop_type_add('v3m#link', #{ highlight: 'v3mLink', priority: 10 })
+    call prop_type_add('v3m#link', { 'highlight': 'v3mLink', 'priority': 10 })
   endif
 
   if empty(prop_type_get('v3m#visible_1'))
-    call prop_type_add('v3m#visible_1', #{ highlight: 'v3mVisible1', priority: 6 })
+    call prop_type_add('v3m#visible_1', { 'highlight': 'v3mVisible1', 'priority': 6 })
   endif
 
   if empty(prop_type_get('v3m#visible_2'))
-    call prop_type_add('v3m#visible_2', #{ highlight: 'v3mVisible2', priority: 6 })
+    call prop_type_add('v3m#visible_2', { 'highlight': 'v3mVisible2', 'priority': 6 })
   endif
 
   if empty(prop_type_get('v3m#other'))
-    call prop_type_add('v3m#other', #{ highlight: 'v3mOther', priority: 5 })
+    call prop_type_add('v3m#other', { 'highlight': 'v3mOther', 'priority': 5 })
   endif
 
   if empty(prop_type_get('v3m#form'))
-    call prop_type_add('v3m#form', #{ priority: 4 })
+    call prop_type_add('v3m#form', { 'priority': 4 })
   endif
 
   if empty(prop_type_get('v3m#anchor'))
-    call prop_type_add('v3m#anchor', #{ priority: 4 })
+    call prop_type_add('v3m#anchor', { 'priority': 4 })
   endif
 
   if empty(prop_type_get('v3m#ignore'))
-    call prop_type_add('v3m#ignore', #{ priority: 0 })
+    call prop_type_add('v3m#ignore', { 'priority': 0 })
   endif
 
   if empty(prop_type_get('v3m#unknown'))
-    call prop_type_add('v3m#unknown', #{ highlight: 'v3mUnknown', priority: 0 })
+    call prop_type_add('v3m#unknown', { 'highlight': 'v3mUnknown', 'priority': 0 })
   endif
 
 endfunction
@@ -163,12 +163,12 @@ call s:configure_prop_type()
 
 function! v3m#parse#create_prop(bufnr, id, tag, end_lnum, end_col) abort
   let type = s:get_proptype(a:tag)
-  let prop = #{
-        \ bufnr: a:bufnr,
-        \ id: a:id,
-        \ type: type,
-        \ end_lnum: a:end_lnum,
-        \ end_col: a:end_col,
+  let prop = {
+        \ 'bufnr': a:bufnr,
+        \ 'id': a:id,
+        \ 'type': type,
+        \ 'end_lnum': a:end_lnum,
+        \ 'end_col': a:end_col,
         \}
   return prop
 endfunction
@@ -179,15 +179,15 @@ function! s:contains(list, tag_name) abort
 endfunction
 
 function! v3m#parse#create_metadata(id, last_tag, props) abort
-  let data = #{
-        \ id: a:id,
-        \ tag: a:last_tag['tag_name'],
-        \ type: a:props['type'],
-        \ lnum: a:last_tag['=lnum'],
-        \ col: a:last_tag['=col'],
-        \ end_lnum: a:props['end_lnum'],
-        \ end_col: a:props['end_col'],
-        \ attributes: a:last_tag['attributes'],
+  let data = {
+        \ 'id': a:id,
+        \ 'tag': a:last_tag['tag_name'],
+        \ 'type': a:props['type'],
+        \ 'lnum': a:last_tag['=lnum'],
+        \ 'col': a:last_tag['=col'],
+        \ 'end_lnum': a:props['end_lnum'],
+        \ 'end_col': a:props['end_col'],
+        \ 'attributes': a:last_tag['attributes'],
         \}
   return data
 endfunction
@@ -332,7 +332,8 @@ function! v3m#parse#split_elements(line) abort
   return elements
 endfunction
 
-function! v3m#parse#add_tag_data(url, meta, fragments, forms, prop_list, bufnr, open_tag, end_lnum='', end_col='') abort
+"function! v3m#parse#add_tag_data(url, meta, fragments, forms, prop_list, bufnr, open_tag, end_lnum='', end_col='') abort
+function! v3m#parse#add_tag_data(url, meta, fragments, forms, prop_list, bufnr, open_tag, end_lnum, end_col) abort
   let open_lnum = a:open_tag['=lnum']
   let open_col = a:open_tag['=col']
 
@@ -368,7 +369,7 @@ function! v3m#parse#add_fragments(fragments, tag) abort
         let attr_value = attr['attr_value']
         let attr_value = v3m#util#decode_char_entity_ref(attr_value)
         if !empty(attr_value)
-          let a:fragments[attr_value] = #{ lnum: a:tag['=lnum'], col: a:tag['=col'] }
+          let a:fragments[attr_value] = { 'lnum': a:tag['=lnum'], 'col': a:tag['=col'] }
         endif
       endif
   endfor
@@ -424,10 +425,10 @@ function! s:add_form(forms, tag) abort
   let form = s:get_form(a:forms, fid)
   let tag_name = a:tag['tag_name']
   if tag_name ==# 'form_int'
-    let data = #{
-          \ method: get(attributes, 'method', ''),
-          \ action: get(attributes, 'action', ''),
-          \ name: get(attributes, 'name', ''),
+    let data = {
+          \ 'method': get(attributes, 'method', ''),
+          \ 'action': get(attributes, 'action', ''),
+          \ 'name': get(attributes, 'name', ''),
           \}
     let form['form_int'] = data
   elseif tag_name ==# 'input_alt'

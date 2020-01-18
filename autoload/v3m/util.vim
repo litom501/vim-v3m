@@ -3,7 +3,11 @@ scriptencoding utf-8
 " Author     : Koji Sato <litom501+vim@gmail.com>
 " License    : MIT License
 
-function! v3m#util#get_prop(bufnr, lnum, col=-1) abort
+"function! v3m#util#get_prop(bufnr, lnum, col=-1) abort
+function! v3m#util#get_prop(bufnr, lnum, col) abort
+  if empty(a:col)
+    let a:col = -1
+  endif
   let props = {
         \ 'bufnr': a:bufnr
         \}
@@ -66,7 +70,8 @@ function! v3m#util#filter_array_by_map_value(key, value) abort
   return { idx, value -> value[a:key] ==# a:value }
 endfunction
 
-function! v3m#util#find_by_map_value(list, key, value, ignore_value_case=0) abort
+"function! v3m#util#find_by_map_value(list, key, value, ignore_value_case=0) abort
+function! v3m#util#find_by_map_value(list, key, value, ignore_value_case) abort
   for v in a:list
     if a:ignore_value_case && v[a:key] ==? a:value
       return v

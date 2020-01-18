@@ -8,7 +8,11 @@ let s:v3m_error = s:v3m . '[ERROR]'
 let s:v3m_warn  = s:v3m . '[WARN ]'
 let s:v3m_debug = s:v3m . '[DEBUG]'
 
-function! v3m#inspect#dump(bufnr='%') abort
+function! v3m#inspect#dump(bufnr) abort
+  if empty(a:bufnr)
+    let a:bufnr = '%'
+  endif
+
   let bufnr = bufnr(a:bufnr)
   let v3m = getbufvar(bufnr, 'v3m', '')
 
@@ -66,17 +70,17 @@ function! v3m#inspect#cursor() abort
   if len(links) > 0
     let link = meta[links[0]['id']]
     let attributes = link['attributes']
-    let href = v3m#util#find_by_map_value(attributes, 'attr_name', 'href')
+    let href = v3m#util#find_by_map_value(attributes, 'attr_name', 'href', 0)
     if has_key(href, 'attr_value')
       let href = v3m#util#decode_char_entity_ref(href['attr_value'])
     else
       let href = ''
     endif
 
-    let domain = v3m#page#get_param(bufnr, 'domain')
-    let current_url = v3m#page#get_param(bufnr, 'url')
-    let current_url = v3m#url#normalize(current_url)
-    let url = v3m#url#normalize(v3m#url#resolve(href, current_url))
+    let domain = v3m#page#get_param(bufnr, 'domain', '')
+    let current_url = v3m#page#get_param(bufnr, 'url', '')
+    let current_url = v3m#url#normalize(current_url, '')
+    let url = v3m#url#normalize(v3m#url#resolve(href, current_url), '')
 
     echom s:v3m_debug 'links' links
     echom s:v3m_debug printf("meta : %s", meta[links[0]['id']])

@@ -1,10 +1,8 @@
 # TODO
 
 ## Defect
-
-### html 以外の URL を開いた際の処理
-html 以外の URL を読み込んだ際に、html のソースとして処理使用とするので
-様々な問題が発生
+### ロケーション表示のキーバインド
+ロケーション表示に使用しているキーバインド CTRL-L は、画面の再描画と衝突する
 
 ### 折り返されたリンクでの遷移
 
@@ -64,6 +62,9 @@ netrw の機能確認
 
 ## Features
 
+### 履歴でフォームの入力内容保持
+履歴に戻った際に、フォームの入力内容を復帰させる
+
 ### カーソル化の URL 表示
 カーソル化の URL を表示する機能
 
@@ -73,9 +74,12 @@ netrw の機能確認
 
 ### neovim 対応
 
-async.vim を使用する？
-→
-async.vim に切り替えたが、nvim では動作未検証
+*   [x] job 互換
+    * [x] async.vim を使用
+*   [x] vimscript 互換
+    * [x] literal-Dict `#{}` を使用しない
+    * [x] optional-function-argument を使用しない
+*   [ ] textprop 互換
 
 ### support html5 entity name
 https://dev.w3.org/html5/html-author/charref
@@ -202,6 +206,10 @@ w3m プロセスの同時呼び出し数を設定できるようにする。
 # DONE
 
 ## Defect
+
+### html 以外の URL を開いた際の処理
+html 以外の URL を読み込んだ際に、html のソースとして処理使用とするので
+様々な問題が発生
 
 ### タグ解析エラー 2020/01/11
 

@@ -53,9 +53,9 @@ command! -nargs=? -complete=file V3mLocal :execute ':edit v3m://' . fnameescape(
 nnoremap <silent> <Plug>(v3m-open-link)        :<C-U>call v3m#open_link()<CR>
 nnoremap <silent> <Plug>(v3m-open-link-tab)    :<C-U>if !empty(v3m#get_curlink())\|execute 'tabnew v3m://' . fnameescape(v3m#get_curlink())\|endif<CR>
 nnoremap <silent> <Plug>(v3m-open-link-new)    :<C-U>if !empty(v3m#get_curlink())\|execute 'new v3m://' . fnameescape(v3m#get_curlink())\|endif<CR>
-nnoremap <silent> <Plug>(v3m-open-homepage)    :<C-U>call v3m#open()<CR>
+nnoremap <silent> <Plug>(v3m-open-homepage)    :<C-U>call v3m#open('', 0)<CR>
 nnoremap <silent> <Plug>(v3m-reload-page)      :<C-U>call v3m#reload()<CR>
-nnoremap <silent> <Plug>(v3m-next-link)        :<C-U>call v3m#next_link()<CR>
+nnoremap <silent> <Plug>(v3m-next-link)        :<C-U>call v3m#next_link(0)<CR>
 nnoremap <silent> <Plug>(v3m-previous-link)    :<C-U>call v3m#next_link(1)<CR>
 nnoremap <silent> <Plug>(v3m-show-locationbar) :<C-U>call v3m#input_location()<CR>
 nnoremap <silent> <Plug>(v3m-show-cursor-link) :<C-U>call v3m#show_cursor_link()<CR>

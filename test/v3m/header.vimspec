@@ -1,0 +1,21 @@
+" A web browser interface plugin for Vim
+" Author     : Koji Sato <litom501+vim@gmail.com>
+" License    : MIT License
+
+Describe header.vim
+    It get_content_type_type_1()
+        Assert Equals(v3m#header#get_content_type_type(' text/html; charset=utf-8'), 'text/html')
+    End
+
+    It get_content_type_type_2()
+        Assert Equals(v3m#header#get_content_type_type(' text/html'), 'text/html')
+    End
+
+    It get_content_type_charset_1()
+        Assert Equals(v3m#header#get_content_type_charset(' text/html; charset=utf-8'), 'utf-8')
+    End
+
+    It get_content_type_charset_2()
+        Assert Equals(v3m#header#get_content_type_charset(' text/html'), '')
+    End
+End
