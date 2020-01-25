@@ -194,6 +194,15 @@ function! v3m#url#resolve(url, base_url) abort
   end
 endfunction
 
+function! v3m#url#is_same_page(url_1, url_2) abort
+  let parsed_1 = v3m#url#parse(a:url_1)
+  let parsed_2 = v3m#url#parse(a:url_2)
+
+  return parsed_1['domain'] ==# parsed_2['domain'] 
+        \ && parsed_1['path'] ==# parsed_2['path']
+        \ && parsed_1['query'] ==# parsed_2['query']
+endfunction
+
 function s:split(path) abort
   if empty(a:path)
     let path = []

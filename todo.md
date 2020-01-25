@@ -138,33 +138,12 @@ w3m のダンプには、ヘッダ情報がふくまれないので難しい
 
 ### タグとハイライトグループの整理
 
-
 ## Implements
 
-### User-Agent の決定
-w3m -version で取得した値を使用。
-v3m もつける？ 各ブラウザがどのように、User-Agent を使用しているか確認する。
-
-### ページパース時に、フォームの情報構築
-form_int, input_alt タグ fid属性
-```
-fid*
-  form_int
-    method
-    action
-    name
-  input_alt*
-    type
-    name
-    value
-    maxlength
-    #displaylength
-```
+### history 表示時のキャッシュ利用
+ページ取得が遅いので、キャッシュを利用する
 
 ### ホームページは、履歴に含めない
-
-### フォーム関連タグの解析
-fid で分類？
 
 ### データ取得処理の分離
 カスタマイズのため。 zip 内 html, md, キャッシュ処理など
@@ -189,7 +168,6 @@ url に関して、内部ではデコードした情報で保持。 一致確認
 
 ### w3m プロセスの同時呼び出し数制限
 w3m プロセスの同時呼び出し数を設定できるようにする。
-
 
 ## Test
 
@@ -351,6 +329,31 @@ curl を使用して、リダイレクトサポートしつつ、ヘッダ・ソ
 デフォルト値をどうするか(80 x 1.5 or 2 程度?)
 
 ## Implements
+
+### ページパース時に、フォームの情報構築
+form_int, input_alt タグ fid属性
+```
+fid*
+  form_int
+    method
+    action
+    name
+  input_alt*
+    type
+    name
+    value
+    maxlength
+    #displaylength
+```
+
+### フォーム関連タグの解析
+fid で分類？
+
+### User-Agent の決定
+w3m -version で取得した値を使用。
+v3m もつける？ 各ブラウザがどのように、User-Agent を使用しているか確認する。
+→ curl を使用する場合、google の検索ページが curl の User-Agent を許可しないので、
+w3m のバージョンから取得したものを使用
 
 ### 属性の実体参照デコード
 

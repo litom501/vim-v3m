@@ -365,4 +365,33 @@ Describe v3m plugin v3m/url.vim
 
     Assert Equals(actual, expected)
   End
+
+  It is_same_page_1()
+      let url_1 = 'https://abc/def'
+      let url_2 = 'https://abc/def'
+      Assert True(v3m#url#is_same_page(url_1, url_2))
+  End
+
+  It is_same_page_2()
+      let url_1 = 'https://abc/def'
+      let url_2 = 'https://def/def'
+      Assert False(v3m#url#is_same_page(url_1, url_2))
+  End
+
+  It is_same_page_3()
+      let url_1 = 'https://abc/def'
+      let url_2 = 'https://abc/ghi'
+      Assert False(v3m#url#is_same_page(url_1, url_2))
+  End
+
+  It is_same_page_4()
+      let url_1 = 'https://abc/def?ghi'
+      let url_2 = 'https://abc/def?ghi'
+      Assert True(v3m#url#is_same_page(url_1, url_2))
+  End
+  It is_same_page_4()
+      let url_1 = 'https://abc/def?ghi'
+      let url_2 = 'https://abc/def?jkl'
+      Assert False(v3m#url#is_same_page(url_1, url_2))
+  End
 End

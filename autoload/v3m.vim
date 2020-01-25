@@ -97,7 +97,7 @@ function! v3m#open(url, mode) abort
       let history = v3m#page#get_param(bufnr, 'history', [])
       call add(history, prev_url)
 
-      if s:is_same_page(prev_url, url)
+      if v3m#url#is_same_page(prev_url, url)
         let parsed_url = v3m#url#parse(url)
         call v3m#goto_name(bufnr, parsed_url['fragment'])
         return
@@ -195,16 +195,16 @@ function! v3m#goto_name(bufnr, name) abort
   endif
 endfunction
 
-function! s:is_same_page(url_1, url_2) abort
-  let parsed_1 = v3m#url#parse(a:url_1)
-  let parsed_2 = v3m#url#parse(a:url_2)
-
-  if parsed_1['domain'] ==# parsed_2['domain']
-    return parsed_1['path'] ==# parsed_2['path']
-  else
-    return 0
-  endif
-endfunction
+"function! s:is_same_page(url_1, url_2) abort
+"  let parsed_1 = v3m#url#parse(a:url_1)
+"  let parsed_2 = v3m#url#parse(a:url_2)
+"
+"  if parsed_1['domain'] ==# parsed_2['domain']
+"    return parsed_1['path'] ==# parsed_2['path']
+"  else
+"    return 0
+"  endif
+"endfunction
 
 function! v3m#reload() abort
   let bufnr = bufnr('%')
@@ -274,6 +274,7 @@ function! s:action(input) abort
   elseif type ==# 'submit'
     let inputs = get(form, 'input_alt')
     let query = ''
+
     for key in keys(inputs)
       let input_type = get(inputs[key], 'type')
       if input_type ==# 'submit'
@@ -289,7 +290,9 @@ function! s:action(input) abort
       endif
       let query .= key . '=' . v
     endfor
+
     let form_int = get(form, 'form_int')
+
     if !empty(form_int)
       let action = get(form_int, 'action')
       if !empty(action)
