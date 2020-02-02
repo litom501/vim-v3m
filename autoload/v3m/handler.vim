@@ -159,8 +159,7 @@ function! v3m#handler#render_error_page(bufnr) abort
 endfunction
 
 function! s:get_sequence(jobid) abort
-  let sequence = s:job_context.sequences[a:jobid]
-  return sequence
+  return get(s:job_context.sequences, a:jobid, 0)
 endfunction
 
 function! s:remove_sequence(jobid) abort
@@ -214,6 +213,10 @@ endfunction
 
 function! s:default_out(jobid, msg, event_type) abort
   let sequence = s:get_sequence(a:jobid)
+  if !sequence
+    echoerr s:v3m_error ':' 'job id is missing.'
+    return
+  endif
   let page = v3m#page#get_page(s:get_bufnr(sequence))
 
   call s:data_out(a:jobid, a:msg, page)
@@ -230,6 +233,11 @@ endfunction
 
 function! s:default_close(jobid, exit_code, event_type) abort
   let sequence = s:get_sequence(a:jobid)
+  if !sequence
+    echoerr s:v3m_error ':' 'job id is missing.'
+    return
+  endif
+
   let bufnr = s:get_bufnr(sequence)
 
   if a:exit_code > 0
@@ -247,9 +255,12 @@ function! s:default_close(jobid, exit_code, event_type) abort
 endfunction
 
 function! s:default_error(jobid, msg, event_type) abort
-  "echom 'default_error' a:msg
-
   let sequence = s:get_sequence(a:jobid)
+  if !sequence
+    echoerr s:v3m_error ':' 'job id is missing.'
+    return
+  endif
+
   let bufnr = s:get_bufnr(sequence)
   call v3m#handler#render_error_page(bufnr)
 endfunction
@@ -262,9 +273,22 @@ endfunction
 
 function! s:curl_out(jobid, msg, event_type) abort
   let sequence = s:get_sequence(a:jobid)
+  if !sequence
+    echoerr s:v3m_error ':' 'job id is missing.'
+    return
+  endif
+
   let source = v3m#page#get_source(s:get_bufnr(sequence))
 
   call s:data_out(a:jobid, a:msg, source)
+endfunction
+
+function! s:curl_close_wrap(jobid, exit_code, event_type) abort
+  call timer_start(100, function("s:curl_close_wrap_1", [a:jobid, a:exit_code, a:event_type]))
+endfunction
+
+function! s:curl_close_wrap_1(jobid, exit_code, event_type, timer_id) abort
+  call c:curl_close(jobid, exit_code, event_type)
 endfunction
 
 function! s:curl_close(jobid, exit_code, event_type) abort
