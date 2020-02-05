@@ -48,7 +48,7 @@ augroup END
 "-complete=file をつけると、# ゃ % を含む URL を引き渡した際に q-args を展開した時点で、補間が適用されている
 "command! -nargs=? -complete=file V3m :execute ':edit v3m://' . fnameescape(<q-args>)
 command! -nargs=? V3m :execute ':edit v3m://' . fnameescape(<q-args>)
-command! -nargs=? -complete=file V3mLocal :execute ':edit v3m://' . fnameescape(<q-args>)
+command! -nargs=? -complete=file V3mLocal :execute ':edit v3m://' . fnameescape(fnamemodify(expand(<q-args>), ":p"))
 
 nnoremap <silent> <Plug>(v3m-open-link)        :<C-U>call v3m#open_link()<CR>
 nnoremap <silent> <Plug>(v3m-open-link-tab)    :<C-U>if !empty(v3m#get_curlink())\|execute 'tabnew v3m://' . fnameescape(v3m#get_curlink())\|endif<CR>
