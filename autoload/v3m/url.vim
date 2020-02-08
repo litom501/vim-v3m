@@ -213,26 +213,31 @@ function s:split(path) abort
 endfunction
 
 function! v3m#url#_resolve_path(path, base_path) abort
+  if match(a:path, '^./') == 0
+    let path = strpart(a:path, 2)
+  else
+    let path = a:path
+  endif
   if empty(a:base_path)
-    return a:path
+    return path
   endif
 
-  let path = s:split(a:path)
+  let paths = s:split(path)
   let base_path = s:split(a:base_path)
 
   " empty
-  if empty(path)
+  if empty(paths)
     return a:base_path
   " absolute
-  elseif path[0] == ''
-    return a:path
+  elseif paths[0] == ''
+    return path
   " relative
   else
-    let back_level = s:absolute_level(path)
+    let back_level = s:absolute_level(paths)
     if len(base_path) < back_level
       echoerr s:v3m_error 'Invalid url' back_level a:path a:base_path
     endif
-    let path = path[back_level:]
+    let paths = paths[back_level:]
     if base_path[-1] != ''
       let base_path = base_path[0:-2]
     endif
@@ -249,9 +254,8 @@ function! v3m#url#_resolve_path(path, base_path) abort
     elseif !empty(base_path) && len(base_path) == 1 && base_path[0] == ''
       call add(base_path, '')
     endif
-    return join(base_path, '/') . join(path, '/')
+    return join(base_path, '/') . join(paths, '/')
   endif
-
 endfunction
 
 function! s:absolute_level(path) abort

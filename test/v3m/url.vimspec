@@ -279,11 +279,47 @@ Describe v3m plugin v3m/url.vim
     Assert Equals(actual, expected)
   End
 
+  It url_resolve_path_2_1()
+    let path = './abc'
+    let base_path = '/def'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/abc'
+
+    Assert Equals(actual, expected)
+  End
+
   It url_resolve_path_3()
     let path = 'abc'
     let base_path = '/def/ghi'
     let actual = v3m#url#_resolve_path(path, base_path)
     let expected = '/def/abc'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_3_1()
+    let path = './abc'
+    let base_path = '/def/ghi'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/def/abc'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_3_2()
+    let path = './abc'
+    let base_path = '/def/'
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = '/def/abc'
+
+    Assert Equals(actual, expected)
+  End
+
+  It url_resolve_path_3_3()
+    let path = './abc'
+    let base_path = ''
+    let actual = v3m#url#_resolve_path(path, base_path)
+    let expected = 'abc'
 
     Assert Equals(actual, expected)
   End
