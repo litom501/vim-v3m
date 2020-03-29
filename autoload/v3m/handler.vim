@@ -33,79 +33,155 @@ function! v3m#handler#job_start(url, bufnr, cols) abort
 endfunction
 
 function! v3m#handler#render_page(bufnr)
-  let page = v3m#page#get_page(a:bufnr)
-  let meta = v3m#page#get_meta(a:bufnr)
-  let fragments = v3m#page#get_fragments(a:bufnr)
-  let forms = v3m#page#get_forms(a:bufnr)
-  let url = v3m#page#get_param(a:bufnr, 'url', '')
-  let tag_stack = []
+  let page_info = s:get_page_info(a:bufnr)
+  let parse_info = #{
+    \ tag_stack: [],
+    \ i: 0,
+    \ col: -1,
+    \ texts: [],
+    \ prop_list: [],
+    \ page_len: len(page_info.page),
+    \}
 
   call setbufvar(a:bufnr, '&modifiable', 1)
 
-  for i in range(len(page))
+  while parse_info.i < parse_info.page_len
+    let parse_info.col = 1
+    let parse_info.texts = []
+    let parse_info.prop_list = []
+
     let col = 1
 
-    let elements = v3m#parse#split_elements(page[i])
+    "let elements = v3m#parse#split_elements(page_info.page[parse_info.i])
+    let elements = v3m#parse#split_elements2(page_info.page, parse_info.i)
     let texts = []
     let prop_list = []
+    let in_tag = 0
+    let tag_element = ''
 
+    let max_offset = 0
     for element in elements
-      if element[0] != '<'
-        let str = v3m#util#decode_char_entity_ref(element)
-        let col += strlen(str)
-        call add(texts, str)
-      else
-        let tag = v3m#parse#tag(element)
-        if tag['tag_type'] ==# 'open'
-          let tag['=lnum'] = i + 1
-          let tag['=col'] = col
+      let max_offset = element.offset
 
-          call add(tag_stack, tag)
-        elseif tag['tag_type'] ==# 'close'
-          let tag_name = tag['tag_name']
+      if element.text[0] != '<'
+        if !in_tag
+          let str = v3m#util#decode_char_entity_ref(element.text)
+          let parse_info.col += strlen(str)
 
-          while len(tag_stack) > 0
-            let open_tag = remove(tag_stack, len(tag_stack) - 1)
-            let open_tag_name = open_tag['tag_name']
-
-            call v3m#parse#add_tag_data(url, meta, fragments, forms, prop_list, a:bufnr, open_tag, i + 1, col)
-            if open_tag['tag_type'] ==# 'open' && tag_name ==? open_tag_name
-              break
-            else
-              " unclosed tag
-            endif
+          while len(parse_info.texts) <= element.offset
+            call add(parse_info.texts, [])
           endwhile
+
+          call add(parse_info.texts[element.offset], str)
         else
-          echoerr s:v3m_error ':' 'Unknown tag_type.'
+          let tag_element = ' ' . element.text
+          if element.text[-1:] == '>'
+            call s:add_tag(page_info, parse_info, tag_element)
+            let tag_element = ''
+            let in_tag = 0
+          endif
+        endif
+      " tag start
+      else
+        let in_tag = 1
+
+        if element.text[-1:] == '>'
+          call s:add_tag(page_info, parse_info, element.text)
+          let in_tag = 0
+        else
+          let tag_element = ' ' . element.text
         endif
       endif
-
     endfor
 
-    while len(tag_stack) > 0
-      let open_tag = remove(tag_stack, len(tag_stack) - 1)
+    " add unclosed tags
+    call s:add_tags(page_info, parse_info, '')
 
-      " unclosed tag
-      call v3m#parse#add_tag_data(url, meta, fragments, forms, prop_list, a:bufnr, open_tag, '', '')
-    endwhile
-
-    call setbufline(a:bufnr, i + 1, join(texts, ''))
-
-    for prop in prop_list
-      try
-        call prop_add(prop['lnum'], prop['col'], prop['props'])
-      catch /.*/
-        echoerr s:v3m_error printf('lnum, col : %d, %d(prop : %s), max lnum : %d', prop['lnum'], prop['col'], prop['props'], line('$'))
-      endtry
+    for i in range(max_offset + 1)
+      let line = (len(parse_info.texts) > i) ? join(parse_info.texts[i], '') : ''
+      call setbufline(a:bufnr, parse_info.i + 1 + i, line)
     endfor
-  endfor
 
-  let parsed_url = v3m#url#parse(url)
+    call s:add_props(parse_info.prop_list)
+    let parse_info.i += (1 + max_offset)
+
+  endwhile
+
+  let parsed_url = v3m#url#parse(page_info.url)
   if parsed_url['fragment'] != ''
     call v3m#goto_name(a:bufnr, parsed_url['fragment'])
   endif
 
   call setbufvar(a:bufnr, '&modifiable', 0)
+endfunction
+
+function! s:add_tag(page_info, parse_info, text) abort
+  let tag = v3m#parse#tag(a:text)
+  if tag['tag_type'] ==# 'open'
+    let tag['=lnum'] = a:parse_info.i + 1
+    let tag['=col'] = a:parse_info.col
+
+    call add(a:parse_info.tag_stack, tag)
+  elseif tag['tag_type'] ==# 'close'
+    let tag_name = tag['tag_name']
+
+    call s:add_tags(a:page_info, a:parse_info, tag_name)
+  else
+    echoerr s:v3m_error ':' 'Unknown tag_type.'
+  endif
+endfunction
+
+function! s:get_page_info(bufnr) abort
+  return #{
+        \   page: v3m#page#get_page(a:bufnr),
+        \   meta: v3m#page#get_meta(a:bufnr),
+        \   fragments: v3m#page#get_fragments(a:bufnr),
+        \   forms: v3m#page#get_forms(a:bufnr),
+        \   url: v3m#page#get_param(a:bufnr, 'url', ''),
+        \   bufnr: a:bufnr,
+        \ }
+endfunction
+
+function! s:add_tags(page_info, parse_info, close_tag_name) abort
+  while len(a:parse_info.tag_stack) > 0
+    let open_tag = remove(a:parse_info.tag_stack, len(a:parse_info.tag_stack) - 1)
+    let open_tag_name = open_tag['tag_name']
+
+    if empty(a:close_tag_name)
+      let close_lnum = ''
+      let close_col = ''
+    else
+      let close_lnum = a:parse_info.i + 1
+      let close_col = a:parse_info.col
+    endif
+    call v3m#parse#add_tag_data(
+          \ a:page_info.url,
+          \ a:page_info.meta,
+          \ a:page_info.fragments,
+          \ a:page_info.forms,
+          \ a:parse_info.prop_list,
+          \ a:page_info.bufnr,
+          \ open_tag,
+          \ close_lnum,
+          \ close_col)
+    if empty(a:close_tag_name)
+      " unclosed tag
+    elseif open_tag['tag_type'] ==# 'open' && a:close_tag_name ==? open_tag_name
+      break
+    else
+      " unclosed tag
+    endif
+  endwhile
+endfunction
+
+function! s:add_props(prop_list) abort
+  for prop in a:prop_list
+    try
+      call prop_add(prop['lnum'], prop['col'], prop['props'])
+    catch /.*/
+      echoerr s:v3m_error printf('lnum, col : %d, %d(prop : %s), max lnum : %d', prop['lnum'], prop['col'], prop['props'], line('$'))
+    endtry
+  endfor
 endfunction
 
 function! s:render_page(bufnr, contents) abort
@@ -399,64 +475,6 @@ function! s:normalize_keys(dict) abort
   return rv
 endfunction
 
-"function! s:get_header_to(source, from) abort
-"  if len(a:source) < a:from
-"    return -1
-"  endif
-"  if matchstrpos(a:source[a:from], '^HTTP.*\r')[1] != 0
-"    return -1
-"  endif
-"  return index(a:source, "\r", a:from)
-"endfunction
-
-"" TODO test
-"function! s:get_content_type_type(content_type) abort
-"  let list = matchlist(a:content_type, '\c^[ ]*\([^ ;]\+\)[ ]*;')
-"  if empty(list)
-"    return ''
-"  else
-"    return list[1]
-"  endif
-"endfunction
-
-"function! s:get_content_type_charset(content_type) abort
-"  let list = matchlist(a:content_type, '\c;[ ]*charset=\(\%(\w\|\-\)*\)')
-"  if empty(list)
-"    return ''
-"  else
-"    return list[1]
-"  endif
-"endfunction
-
-"function! s:parse_response_header(response_headers) abort
-"  if len(a:response_headers) == 0
-"    return {}
-"  endif
-"  let status_line = matchlist(a:response_headers[0], 'HTTP/\([^ ]\+\) \([^ ]\+\) \(.*\)\r')
-"  if empty(status_line)
-"    echom 'empty status_line' a:response_headers
-"    return {}
-"  endif
-"
-"  let list = {}
-"  let list[':HTTP-Version'] = status_line[1]
-"  let list[':Status-Code'] = status_line[2]
-"  let list[':Reason-Phrase'] = status_line[3]
-"
-"  for i in range(len(a:response_headers))
-"    let pos = matchstrpos(a:response_headers[i], '^[^:]\+\zs:.*\r$')
-"    if pos[1] == -1
-"      continue
-"    else
-"      let key = a:response_headers[i][0:pos[1]-1]
-"      let value = trim(a:response_headers[i][pos[1]+1:])
-"      let list[key] = value
-"    endif
-"  endfor
-"
-"  return list
-"endfunction
-
 let s:user_agent = ''
 
 function! s:get_user_agent() abort
@@ -465,7 +483,6 @@ function! s:get_user_agent() abort
   endif
   return s:user_agent
 endfunction
-
 
 function! s:curl_error(jobid, msg, event_type) abort
   "echom 'default_error' a:msg

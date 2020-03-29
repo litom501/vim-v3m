@@ -51,6 +51,14 @@ function! v3m#open_v3m(url) abort
   endif
 endfunction
 
+function! v3m#get_current_url() abort
+  let bufnr = bufnr('%')
+  call s:validate_v3m_buffer(bufnr)
+
+  let url = v3m#page#get_param(bufnr, 'url', '')
+  return matchstr(url, '\zs[^ ]*\ze')
+endfunction
+
 function! v3m#input_location() abort
   let bufnr = bufnr('%')
   call s:validate_v3m_buffer(bufnr)

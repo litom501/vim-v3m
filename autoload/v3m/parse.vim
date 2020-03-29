@@ -304,6 +304,61 @@ function! v3m#parse#tag(element) abort
   return rv
 endfunction
 
+" TODO テスト作成 タグが閉じられるまで読み込む
+function! v3m#parse#split_elements2(page, i) abort
+  let elements = []
+  let next = 1
+
+  let offset = 0
+  while next
+    if len(a:page) <= a:i + offset
+      break
+    endif
+
+    let line = a:page[a:i + offset]
+    let next = s:split_elements(elements, line, offset)
+    let offset += 1
+  endwhile
+
+  return elements
+endfunction
+
+function! s:split_elements(elements, line, offset) abort
+  let start = 0
+  let len = strlen(a:line)
+
+  while start < len
+    let idx = stridx(a:line, '<', start)
+    if idx == -1
+      call add(a:elements, s:create_element(strpart(a:line, start), a:offset))
+      let start = len
+    else
+      if start != idx
+        call add(a:elements, s:create_element(strpart(a:line, start, idx - start), a:offset))
+        let start = idx
+      endif
+      let idxClose = stridx(a:line, '>', start)
+      if idxClose == -1
+        "echoerr s:v3m_error ':' 'Couldn''t find a right angle bracket ''>'' : ' line start
+        call add(a:elements, s:create_element(strpart(a:line, start), a:offset))
+        let start = len
+        " need next line
+        return 1
+      else
+        call add(a:elements, s:create_element(strpart(a:line, start, idxClose + 1 - start), a:offset))
+        let start = idxClose + 1
+      endif
+    endif
+  endwhile
+
+  return 0
+endfunction
+
+function! s:create_element(text, offset) abort
+  return #{ text:a:text, offset: a:offset }
+endfunction
+
+" deprecated
 function! v3m#parse#split_elements(line) abort
   let elements = []
   let start = 0

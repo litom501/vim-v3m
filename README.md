@@ -12,10 +12,8 @@ v3m-v3m is a web browser interface plugin for Vim. See [help](doc/v3m.txt) for d
 
 ## TODO
 
-* [WIP] Form
-* UserAgent
 * Cookie
-* neovim
+* Page Cache
 * :write
 
 ## Pros and Cons(Japanese)
